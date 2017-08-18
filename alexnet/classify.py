@@ -58,14 +58,15 @@ class AlexNet(object):
                 inputs = tf.placeholder(tf.float32,
                                         [None, 224, 224, 3],
                                         name='input')
-                self.pred_op, _ = alexnet_v1.alexnet_v1(inputs, num_classes=1000, is_training=False)
+#                self.pred_op, _ = alexnet_v1.alexnet_v2(inputs, num_classes=1000, is_training=False)
+                self.pred_op_numpy, _ = alexnet_v1.alexnet_v1(inputs, num_classes=1000, is_training=False)
 #                self.w_op = alexnet_v1.get6W()
             # Create a session and restore weights
             gpu_options = tf.GPUOptions(allow_growth=True)
             sess_config = tf.ConfigProto(
                 gpu_options=gpu_options,
                 allow_soft_placement=True,
-#                device_count={"CPU": 4},
+                device_count={"CPU": 4},
 #                gpu_options=gpu_options,
                 intra_op_parallelism_threads=4,
                 inter_op_parallelism_threads=4               
@@ -98,6 +99,7 @@ class AlexNet(object):
             "alexnet_v1/fc8_b:0": ["fc8", 1]
         }
         self.net_data = np.load(file_name).item()
+        print (type(np.load(file_name)))
 
         for variable in variables:
             if variable.name in alexnet_map.keys():
@@ -125,8 +127,8 @@ class AlexNet(object):
         for image in image_data:
             images.append(self.preprocess(image))
         start_time = time.time()
-#        run_metadata = tf.RunMetadata()
-        fc6x = self.sess.run(self.pred_op, {'input:0': images},
+ #       run_metadata = tf.RunMetadata()
+        fc6x = self.sess.run(self.pred_op_numpy, {'input:0': images},
  #                                   options=tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE),
  #                                   run_metadata=run_metadata
         )
@@ -163,6 +165,36 @@ class AlexNet(object):
         classes = [{"name": self.human_labels.get(i, "unknown"), "weight": float(prediction[i])} for i in index if prediction[i] > 0.0]
         return classes
 
+    #    def classify2(self, image_data, top_k=1):
+        """Run the graph for classification,
+        Args:
+            1. image_data: one raw image data or batch of preprocessed image data
+            3. top_k: return top k classifications
+        Returns:
+            a top k or a list of top k classifications of format [{'name': cat, 'weight': 0.2}, {'name': 'animal', 'weight': xx}]
+        """
+"""        if not isinstance(image_data, list):
+            image_data = [image_data]
+        images = []
+        for image in image_data:
+            images.append(self.preprocess(image))
+        start_time = time.time()
+ #       run_metadata = tf.RunMetadata()
+        predictions = self.sess.run(self.pred_op, {'input:0': images},
+ #                                   options=tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE),
+ #                                   run_metadata=run_metadata
+        )
+#        predictions = self.my_softmax(fc8)
+#        print(predictions)
+        
+#        fetched_timeline=timeline.Timeline(run_metadata.step_stats)
+#        chrome_trace = fetched_timeline.generate_chrome_trace_format(show_memory=True)
+#        with open('timeline_01.json', 'w') as f:
+#            f.write(chrome_trace)
+
+#        return 1
+        return map(lambda pred: self.get_top_k_classes(pred, top_k), predictions)    """
+
 
 if __name__ == '__main__':
     prepare_time = time.time()
@@ -172,18 +204,18 @@ if __name__ == '__main__':
     image_buffer = open(file_name).read()
     print('prepare time: %s' % (time.time() - prepare_time))
     start_time = time.time()
-    model.classify(image_buffer, top_k=10)
-#    print('classification result: %s' % model.classify(image_buffer, top_k=1))
-    print('spend time: %s' % (time.time() - start_time))
-    sigma=0
-    for i in range(1,100):
-        start_time = time.time()
+#    model.classify2(image_buffer, top_k=10)
+    print('classification result: %s' % model.classify(image_buffer, top_k=10))
+#    print('spend time: %s' % (time.time() - start_time))
+#    sigma=0
+#    for i in range(1,100):
+#        start_time = time.time()
  #       model.classify(image_buffer, top_k=10)
-        print('classification result: %s' % model.classify(image_buffer, top_k=10))
-        print('spend time: %s' % (time.time() - start_time))
-        sigma = sigma + time.time() - start_time
-    sigma = sigma/100
-    print(sigma)
+#        print('classification result: %s' % model.classify(image_buffer, top_k=10))
+#        print('spend time: %s' % (time.time() - start_time))
+#        sigma = sigma + time.time() - start_time
+#    sigma = sigma/100
+#    print(sigma)
 
     #start_time = time.time()
     #print('classification result: %s' % model.classify(image_buffer, top_k=1))
