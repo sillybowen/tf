@@ -73,9 +73,15 @@ def softmax(inputs):
     x = tf.Variable(inputs)    
     ret = tf.nn.softmax(inputs)
     return ret;
+def maxpooling(inputs):
+    x = tf.Variable(inputs)
+    maxpool5 = tf.nn.max_pool(conv5, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='VALID')
+    return maxpool5
+
 def alexnet_v1(inputs, num_classes, is_training=True, weight_decay=0.0005, scope=None):
     with tf.variable_scope(scope, 'alexnet_v1', [inputs]) as sc:
         l2_regularizer = alex_l2_regularizer(weight_decay)
+        print(inputs.shape)
         conv1W = variable('conv1_w', [11, 11, 3, 96], initializer=weights_initializer, regularizer=l2_regularizer)
         conv1b = variable('conv1_b', [96], initializer=bias_initializer)
         # Conv1 - Relu - Lrn - Maxpool
@@ -106,12 +112,16 @@ def alexnet_v1(inputs, num_classes, is_training=True, weight_decay=0.0005, scope
         conv5W = variable('conv5_w', [3, 3, 192, 256], initializer=weights_initializer, regularizer=l2_regularizer)
         conv5b = variable('conv5_b', [256], initializer=bias_initializer)
         conv5 = tf.nn.relu(conv(conv4, conv5W, conv5b, 3, 3, 256, 1, 1, padding="SAME", group=2))
+        print (conv5.shape)
         maxpool5 = tf.nn.max_pool(conv5, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='VALID')
-        fc6x = tf.reshape(maxpool5, [-1, int(prod(maxpool5.get_shape()[1:]))])
+        print (maxpool5.shape)
+
+        return maxpool5,dict()
+#        fc6x = tf.reshape(maxpool5, [-1, int(prod(maxpool5.get_shape()[1:]))])
 #        fc6W = variable('fc6_w', [9216, 4096], initializer=weights_initializer, regularizer=l2_regularizer)
 #        sc.reuse_variable()
                 
-        return fc6x, dict()
+#        return fc6x, dict()
 #        fc6W = variable('fc6_w', [9216, 4096], initializer=weights_initializer, regularizer=l2_regularizer)
 #        fc6b = variable('fc6_b', [4096], initializer=bias_initializer)
 #        fc6 = tf.nn.relu_layer(tf.reshape(maxpool5, [-1, int(prod(maxpool5.get_shape()[1:]))]), fc6W, fc6b)

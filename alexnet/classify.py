@@ -128,10 +128,12 @@ class AlexNet(object):
             images.append(self.preprocess(image))
         start_time = time.time()
  #       run_metadata = tf.RunMetadata()
-        fc6x = self.sess.run(self.pred_op_numpy, {'input:0': images},
+        maxpool = self.sess.run(self.pred_op_numpy, {'input:0': images},
  #                                   options=tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE),
  #                                   run_metadata=run_metadata
         )
+        print(maxpool.shape)
+        fc6x = np.reshape(maxpool, [1, 9216])
         print('cov time: %s' % (time.time() - start_time))
         fc6 = np.dot(fc6x, self.net_data['fc6'][0])+ self.net_data['fc6'][1]
         print('matmul6 time: %s' % (time.time() - start_time))
@@ -203,14 +205,13 @@ if __name__ == '__main__':
     file_name = 'data/cat.jpg'
     image_buffer = open(file_name).read()
     print('prepare time: %s' % (time.time() - prepare_time))
+    model.classify(image_buffer, top_k=10)
     start_time = time.time()
-#    model.classify2(image_buffer, top_k=10)
     print('classification result: %s' % model.classify(image_buffer, top_k=10))
 #    print('spend time: %s' % (time.time() - start_time))
 #    sigma=0
 #    for i in range(1,100):
 #        start_time = time.time()
- #       model.classify(image_buffer, top_k=10)
 #        print('classification result: %s' % model.classify(image_buffer, top_k=10))
 #        print('spend time: %s' % (time.time() - start_time))
 #        sigma = sigma + time.time() - start_time
